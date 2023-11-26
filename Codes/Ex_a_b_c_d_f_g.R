@@ -3,9 +3,16 @@ set.seed(646425)
 library("psych")
 library("MASS")
 
+# Install the quadprog package if not already installed
+if (!requireNamespace("quadprog", quietly = TRUE)) {
+  install.packages("quadprog")
+}
+
+# Load the quadprog package
+library(quadprog)
 
 ### IMPORT DATA ###
-#setwd("C:/Users/macie/Desktop/uni/PM assignment/portfolio-management-main/Data")
+setwd("/Users/urbancretnik/Documents/Master/Portfolio Management/assigment")
 #import data 
 ret_raw = read.csv("RET.csv", header = TRUE, sep = ",", stringsAsFactors = FALSE)
 View(ret_raw)
@@ -143,186 +150,75 @@ for (i in 1:T) {
 EW_turnover = EW_turnover/T
 EW_turnover
 
-'''
 ############################
 # Exercise 1.d (10 assets) #
 ############################
-'''
 
-calculate_portfolio_metrics_TAN <- function(N, M, simul) {
-  iota <- matrix(1, nrow = N, ncol = 1)
-  T <- nrow(simul)
-  
-  TAN <- matrix(0, nrow = T, ncol = N)
-  tanReturns <- matrix(0, nrow = T, ncol = 1)
-  
-  # Calculate TAN weights and TAN Returns
-  for (i in (M + 1):T) {
-    cov_matrix <- cov(simul[(i - M):i, 1:N])
-    mean = colMeans(simul[(i-M):i,1:N])
-    denominator <- t(iota) %*% solve(cov_matrix) %*% mean
-    tan <- solve(cov_matrix) %*% mean / denominator[1, 1]
-    TAN[i,] <- tan
-    tanReturns[i,1] <- t(tan) %*% simul[i, 1:N]
-  }
-  
-  # Calculate turnover
-  tan_turnover <- 0
-  for (i in (M + 1):T) {
-    for (j in 1:N) {
-      tan_turnover = tan_turnover + abs(TAN[i, j] - TAN[i - 1, j] * simul[i, j] / tanReturns[i,])
-    }
-  }
-  tan_turnover <- tan_turnover / (T - M)
-  
-  # Calculate Sharpe ratio
-  tan_sharpe <- mean(tanReturns[(M + 1):T, ]) / sd(tanReturns[(M + 1):T, ])
-  
-  return(list(weights = TAN, sharpe_ratio = tan_sharpe, turnover = tan_turnover))
+
+
+#computing tangency weights
+N = 10
+M = 3600
+iota = matrix(1, nrow = N , ncol = 1)
+tangency_10 = matrix(0, nrow = 20000, ncol = N)
+for (i in (M+1):20000) {
+  cov = cov(simulated_10[(i-M):i,1:N])
+  mean = colMeans(simulated_10[(i-M):i,1:N])
+  denominator = t(iota) %*% solve(cov) %*% mean
+  tangency = solve(cov) %*% mean / denominator[1,1]
+  tangency_10[i,] = tangency
 }
 
-########
-'N = 10'
-########
 
-N <- 10
-simulated_data <- simulated_10[1:20000, 1:N]
-
-TAN_result_10_120 <- calculate_portfolio_metrics_TAN(10, 120, simulated_data)
-TAN_sharpe_ratio_10_120 <- TAN_result_10_120$sharpe_ratio
-TAN_turnover_10_120 <- TAN_result_10_120$turnover
-
-TAN_result_10_240 <- calculate_portfolio_metrics_TAN(10, 240, simulated_data)
-TAN_sharpe_ratio_10_240 <- TAN_result_10_240$sharpe_ratio
-TAN_turnover_10_240 <- TAN_result_10_240$turnover
-
-TAN_result_10_3600 <- calculate_portfolio_metrics_TAN(10, 3600, simulated_data)
-TAN_sharpe_ratio_10_3600 <- TAN_result_10_3600$sharpe_ratio
-TAN_turnover_10_3600 <- TAN_result_10_3600$turnover
-
-########
-'N = 100'
-########
-
-N <- 100
-simulated_data <- simulated_10[1:20000, 1:N]
-
-TAN_result_100_120 <- calculate_portfolio_metrics_TAN(100, 120, simulated_data)
-TAN_sharpe_ratio_100_120 <- TAN_result_100_120$sharpe_ratio
-TAN_turnover_100_120 <- TAN_result_100_120$turnover
-
-TAN_result_100_240 <- calculate_portfolio_metrics_TAN(100, 240, simulated_data)
-TAN_sharpe_ratio_100_240 <- TAN_result_100_240$sharpe_ratio
-TAN_turnover_100_240 <- TAN_result_100_240$turnover
-
-TAN_result_100_3600 <- calculate_portfolio_metrics_TAN(100, 3600, simulated_data)
-TAN_sharpe_ratio_100_3600 <- TAN_result_100_3600$sharpe_ratio
-TAN_turnover_100_3600 <- TAN_result_100_3600$turnover
-
-'''
-############################
-# Exercise 1.e (10 assets) # (TAN in sample)
-############################
-'''
-
-calculate_portfolio_metrics_TAN_in_sample <- function(N, M, simul) {
-  iota <- matrix(1, nrow = N, ncol = 1)
-  T <- nrow(simul)
-  
-  TAN <- matrix(0, nrow = T, ncol = N)
-  tanReturns <- matrix(0, nrow = T, ncol = 1)
-  
-  # Calculate TAN weights and TAN Returns
-  for (i in (M + 1):T) {
-    cov_matrix <- cov(simul[(i - M):i, 1:N])
-    mean = colMeans(simul[(i-M):i,1:N])
-    denominator <- t(iota) %*% solve(cov_matrix) %*% mean
-    tan <- solve(cov_matrix) %*% mean / denominator[1, 1]
-    TAN[i,] <- tan
-    tanReturns[i,1] <- t(tan) %*% simul[i, 1:N]
-  }
-  
-  # Calculate turnover
-  tan_turnover <- 0
-  for (i in (M + 1):T) {
-    for (j in 1:N) {
-      tan_turnover = tan_turnover + abs(TAN[i, j] - TAN[i - 1, j] * simul[i, j] / tanReturns[i,])
-    }
-  }
-  tan_turnover <- tan_turnover / (T - M)
-  
-  # Calculate Sharpe ratio
-  tan_sharpe <- mean(tanReturns[(M + 1):T, ]) / sd(tanReturns[(M + 1):T, ])
-  
-  return(list(weights = TAN, sharpe_ratio = tan_sharpe, turnover = tan_turnover))
+tngReturns_10 = matrix(0, nrow = 20000, ncol = 1)
+for (i in 1:20000) {
+  tngReturns_10[i,1] = t(tangency_10[i,]) %*% simulated_10[i,1:N]
 }
 
-########
-'N = 10'
-########
 
-N <- 10
-simulated_data <- simulated_10[1:20000, 1:N]
+#calculate the turnover of the tangency portfolio
+tangency_turnover = 0
+T = 20000
+for (i in (M+1):T) {
+  for (j in 1:N) {
+    tangency_turnover = tangency_turnover + abs(tangency_10[i,j] - tangency_10[i-1,j]*simulated_10[i,j]/tngReturns_10[i,])
+  }
+}
+tangency_turnover = tangency_turnover/(T-M)
+tangency_turnover
 
-TAN_result_10_120_in_sample <- calculate_portfolio_metrics_TAN_in_sample(10, 120, simulated_data)
-TAN_sharpe_ratio_10_120_in_sample <- TAN_result_10_120_in_sample$sharpe_ratio
-TAN_turnover_10_120_in_sample <- TAN_result_10_120_in_sample$turnover
-
-TAN_result_10_240_in_sample <- calculate_portfolio_metrics_TAN_in_sample(10, 240, simulated_data)
-TAN_sharpe_ratio_10_240_in_sample <- TAN_result_10_240_in_sample$sharpe_ratio
-TAN_turnover_10_240_in_sample <- TAN_result_10_240_in_sample$turnover
-
-TAN_result_10_3600_in_sample <- calculate_portfolio_metrics_TAN_in_sample(10, 3600, simulated_data)
-TAN_sharpe_ratio_10_3600_in_sample <- TAN_result_10_3600_in_sample$sharpe_ratio
-TAN_turnover_10_3600_in_sample <- TAN_result_10_3600_in_sample$turnover
-
-########
-'N = 100'
-########
-
-N <- 100
-simulated_data <- simulated_10[1:20000, 1:N]
-
-TAN_result_100_120_in_sample <- calculate_portfolio_metrics_TAN_in_sample(100, 120, simulated_data)
-TAN_sharpe_ratio_100_120_in_sample <- TAN_result_100_120_in_sample$sharpe_ratio
-TAN_turnover_100_120_in_sample <- TAN_result_100_120_in_sample$turnover
-
-TAN_result_100_240_in_sample <- calculate_portfolio_metrics_TAN_in_sample(100, 240, simulated_data)
-TAN_sharpe_ratio_100_240_in_sample <- TAN_result_100_240_in_sample$sharpe_ratio
-TAN_turnover_100_240_in_sample <- TAN_result_100_240_in_sample$turnover
-
-TAN_result_100_3600_in_sample <- calculate_portfolio_metrics_TAN_in_sample(100, 3600, simulated_data)
-TAN_sharpe_ratio_100_3600_in_sample <- TAN_result_100_3600_in_sample$sharpe_ratio
-TAN_turnover_100_3600_in_sample <- TAN_result_100_3600_in_sample$turnover
+#calculate the sharpe ratio of tangency portfolio
+tangency_sharpe = mean(tngReturns_10[(M+1):T,])/sd(tngReturns_10[(M+1):T,])
+tangency_sharpe
 
 
-'''
+
 ###########################################
 # Exercise 1.f (10 assets)  GMV portfolio #
 ###########################################
-'''
 
-calculate_portfolio_metrics_GMV <- function(N, M, simul) {
+
+calculate_portfolio_metrics_GMV <- function(N, M, simulated_10) {
   iota <- matrix(1, nrow = N, ncol = 1)
-  T <- nrow(simul)
+  T <- nrow(simulated_10)
   
   GMV <- matrix(0, nrow = T, ncol = N)
   gmvReturns <- matrix(0, nrow = T, ncol = 1)
   
   # Calculate GMV and GMV Returns
   for (i in (M + 1):T) {
-    cov_matrix <- cov(simul[(i - M):i, 1:N])
+    cov_matrix <- cov(simulated_10[(i - M):i, 1:N])
     denominator <- t(iota) %*% solve(cov_matrix) %*% iota
     gmv <- solve(cov_matrix) %*% iota / denominator[1, 1]
     GMV[i,] <- gmv
-    gmvReturns[i,1] <- t(gmv) %*% simul[i, 1:N]
+    gmvReturns[i,1] <- t(gmv) %*% simulated_10[i, 1:N]
   }
   
   # Calculate turnover
   gmv_turnover <- 0
   for (i in (M + 1):T) {
     for (j in 1:N) {
-      gmv_turnover = gmv_turnover + abs(GMV[i, j] - GMV[i - 1, j] * simul[i, j] / gmvReturns[i,])
+      gmv_turnover = gmv_turnover + abs(GMV[i, j] - GMV[i - 1, j] * simulated_10[i, j] / gmvReturns[i,])
     }
   }
   gmv_turnover <- gmv_turnover / (T - M)
@@ -340,17 +236,17 @@ calculate_portfolio_metrics_GMV <- function(N, M, simul) {
 N <- 10
 simulated_data <- simulated_10[1:20000, 1:N]
   
-GMV_result_10_120 <- calculate_portfolio_metrics_GMV(10, 120, simulated_data)
-GMV_sharpe_ratio_10_120 <- GMV_result_10_120$sharpe_ratio
-GMV_turnover_10_120 <- GMV_result_10_120$turnover
+result_10_120 <- calculate_portfolio_metrics_GMV(10, 120, simulated_data)
+sharpe_ratio_10_120 <- result_10_120$sharpe_ratio
+turnover_10_120 <- result_10_120$turnover
 
-GMV_result_10_240 <- calculate_portfolio_metrics_GMV(10, 240, simulated_data)
-GMV_sharpe_ratio_10_240 <- GMV_result_10_240$sharpe_ratio
-GMV_turnover_10_240 <- GMV_result_10_240$turnover
+result_10_240 <- calculate_portfolio_metrics_GMV(10, 240, simulated_data)
+sharpe_ratio_10_240 <- result_10_240$sharpe_ratio
+turnover_10_240 <- result_10_240$turnover
 
-GMV_result_10_3600 <- calculate_portfolio_metrics_GMV(10, 3600, simulated_data)
-GMV_sharpe_ratio_10_3600 <- GMV_result_10_3600$sharpe_ratio
-GMV_turnover_10_3600 <- GMV_result_10_3600$turnover
+result_10_3600 <- calculate_portfolio_metrics_GMV(10, 3600, simulated_data)
+sharpe_ratio_10_3600 <- result_10_3600$sharpe_ratio
+turnover_10_3600 <- result_10_3600$turnover
 
 ########
 'N = 100'
@@ -359,14 +255,120 @@ GMV_turnover_10_3600 <- GMV_result_10_3600$turnover
 N <- 100
 simulated_data <- simulated_100[1:20000, 1:N]
 
-GMV_rGMV_esult_100_120 <- calculate_portfolio_metrics_GMV(100, 120, simulated_data)
-GMV_sharpe_ratio_100_120 <- GMV_result_100_120$sharpe_ratio
-GMV_turnover_100_120 <- GMV_result_100_120$turnover
+result_100_120 <- calculate_portfolio_metrics_GMV(100, 120, simulated_data)
+sharpe_ratio_100_120 <- result_100_120$sharpe_ratio
+turnover_100_120 <- result_100_120$turnover
 
-GMV_result_100_240 <- calculate_portfolio_metrics_GMV(100, 240, simulated_data)
-GMV_sharpe_ratio_100_240 <- GMV_result_100_240$sharpe_ratio
-GMV_turnover_100_240 <- GMV_result_100_240$turnover
+result_100_240 <- calculate_portfolio_metrics_GMV(100, 240, simulated_data)
+sharpe_ratio_100_240 <- result_100_240$sharpe_ratio
+turnover_100_240 <- result_100_240$turnover
 
-GMV_result_100_3600 <- calculate_portfolio_metrics_GMV(100, 3600, simulated_data)
-GMV_sharpe_ratio_100_3600 <- GMV_result_100_3600$sharpe_ratio
-GMV_turnover_100_3600 <- GMV_result_100_3600$turnover
+result_100_3600 <- calculate_portfolio_metrics_GMV(100, 3600, simulated_data)
+sharpe_ratio_100_3600 <- result_100_3600$sharpe_ratio
+turnover_100_3600 <- result_100_3600$turnover
+
+
+###########################################
+# Exercise 1.g (10, 100 assets)  GMV portfolio #
+###########################################
+
+
+calculate_portfolio_metrics_GMV_nonzero_weights <- function(N, M, simulated_10) {
+  iota <- matrix(1, nrow = N, ncol = 1)
+  T <- nrow(simulated_10)
+    
+  GMV <- matrix(0, nrow = T, ncol = N)
+  gmvReturns <- matrix(0, nrow = T, ncol = 1)
+  
+  # Calculate GMV and GMV Returns
+  for (i in (M + 1):T) {
+    cov_matrix <- cov(simulated_10[(i - M):i, 1:N])
+    denominator <- t(iota) %*% solve(cov_matrix) %*% iota
+    gmv <- solve(cov_matrix) %*% iota / denominator[1, 1]
+    GMV[i,] <- gmv
+    gmvReturns[i,1] <- t(gmv) %*% simulated_10[i, 1:N]
+    
+    # Define quadratic programming parameters
+    Dmat <- cov_matrix
+    dvec <- matrix(rep(0, N), ncol = 1)
+    bvec <- 1
+    
+    # Adjust Amat to have 10 rows
+    A <- cbind(matrix(rep(1, N), nr = N), diag(N))
+    Amat <- A
+    
+    # Combine equality and inequality constraints
+    bvec <- c(bvec, rep(0, N))
+    bvec <- matrix(bvec, ncol = 1)
+    
+    cat("Dmat dimensions:", dim(Dmat), "\n")
+    cat("dvec dimensions:", dim(dvec), "\n")
+    cat("Amat dimensions:", dim(A), "\n")
+    cat("bvec dimensions:", dim(bvec), "\n")
+    
+    
+    # Solve quadratic programming problem
+    weights <- solve.QP(Dmat = as.matrix(Dmat), dvec = as.matrix(dvec), Amat = as.matrix(Amat), bvec = as.matrix(bvec), meq = 1)
+    
+    
+    GMV[i,] <- weights$solution
+    gmvReturns[i,1] <- t(weights$solution) %*% simulated_10[i, 1:N]
+    
+    }
+  
+  
+  
+  # Calculate turnover
+  gmv_turnover <- 0
+  for (i in (M + 1):T) {
+    for (j in 1:N) {
+      gmv_turnover = gmv_turnover + abs(GMV[i, j] - GMV[i - 1, j] * simulated_10[i, j] / gmvReturns[i,])
+    }
+  }
+  gmv_turnover <- gmv_turnover / (T - M)
+  
+  # Calculate Sharpe ratio
+  gmv_sharpe <- mean(gmvReturns[(M + 1):T, ]) / sd(gmvReturns[(M + 1):T, ])
+  
+  return(list(weights = GMV, sharpe_ratio = gmv_sharpe, turnover = gmv_turnover))
+}
+
+########
+'N = 10'
+########
+
+N <- 10
+simulated_data <- simulated_10[1:20000, 1:N]
+
+result_10_120_nss <- calculate_portfolio_metrics_GMV_nonzero_weights(10, 120, simulated_data)
+sharpe_ratio_10_120_nss <- result_10_120_nss$sharpe_ratio
+turnover_10_120_nss <- result_10_120_nss$turnover
+
+result_10_240_nss <- calculate_portfolio_metrics_GMV_nonzero_weights(10, 240, simulated_data)
+sharpe_ratio_10_240_nss <- result_10_240_nss$sharpe_ratio
+turnover_10_240_nss <- result_10_240_nss$turnover
+
+result_10_3600_nss <- calculate_portfolio_metrics_GMV_nonzero_weights(10, 3600, simulated_data)
+sharpe_ratio_10_3600_nss <- result_10_3600_nss$sharpe_ratio
+turnover_10_3600_nss <- result_10_3600_nss$turnover
+
+########
+'N = 100'
+########
+
+N <- 100
+simulated_data <- simulated_100[1:20000, 1:N]
+
+result_100_120_nss <- calculate_portfolio_metrics_GMV_nonzero_weights(100, 120, simulated_data)
+sharpe_ratio_100_120_nss <- result_100_120_nss$sharpe_ratio
+turnover_100_120_nss <- result_100_120_nss$turnover
+
+result_100_240_nss <- calculate_portfolio_metrics_GMV_nonzero_weights(100, 240, simulated_data)
+sharpe_ratio_100_240_nss <- result_100_240_nss$sharpe_ratio
+turnover_100_240_nss <- result_100_240_nss$turnover
+
+result_100_3600_nss <- calculate_portfolio_metrics_GMV_nonzero_weights(100, 3600, simulated_data)
+sharpe_ratio_100_3600_nss <- result_100_3600_nss$sharpe_ratio
+turnover_100_3600_nss <- result_100_3600_nss$turnover
+
+
