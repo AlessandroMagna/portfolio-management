@@ -111,8 +111,8 @@ calculate_GMV_results <- function(N, M) {
   iota <- matrix(c(rep(1, N)), nrow = N, ncol = 1)
   
   Sigma <- list()
-  for (i in M:20000) {
-    Sigma[[i]] = calculate_covariance_matrix(simulated[(i - M + 1):i, ])
+  for (i in (M+1):20000) {
+    Sigma[[i]] = calculate_covariance_matrix(simulated[(i - M):i, 1:N])
   }
   
   w_GMV <- list()
@@ -164,17 +164,30 @@ calculate_GMV_turnover <- function(N, M) {
   return(GMV_turnover)
 }
 
-# Set N and M
-N <- 10
-M <- 240
 
-# Call the second function with N and M
-w_GMV = calculate_GMV_results(N, M)$w_gmv
-GMV_moments = calculate_GMV_results(N, M)$gmv_moments
 
-GMV_sharpe = calculate_GMV_sharpe(N, M)
-GMV_sharpe
+# Call the functions with N and M
 
-GMV_turnover = calculate_GMV_turnover(N, M)
-GMV_turnover
+#GMV with N = 10 and M = 120
+w_GMV_10_120 = calculate_GMV_results(10, 120)$w_gmv
+GMV_moments_10_120 = calculate_GMV_results(10, 120)$gmv_moments
+GMV_sharpe_10_120 = calculate_GMV_sharpe(10, 120)
+GMV_sharpe_10_120
+GMV_turnover_10_120 = calculate_GMV_turnover(10, 120)
+GMV_turnover_10_120
 
+#GMV with N = 10 and M = 240
+w_GMV_10_240 = calculate_GMV_results(10, 240)$w_gmv
+GMV_moments_10_240 = calculate_GMV_results(10, 240)$gmv_moments
+GMV_sharpe_10_240 = calculate_GMV_sharpe(10, 240)
+GMV_sharpe_10_240
+GMV_turnover_10_240 = calculate_GMV_turnover(10, 240)
+GMV_turnover_10_240
+
+#GMV with N = 10 and M = 3600
+w_GMV_10_3600 = calculate_GMV_results(10, 3600)$w_gmv
+GMV_moments_10_3600 = calculate_GMV_results(10, 3600)$gmv_moments
+GMV_sharpe_10_3600 = calculate_GMV_sharpe(10, 3600)
+GMV_sharpe_10_3600
+GMV_turnover_10_3600 = calculate_GMV_turnover(10, 3600)
+GMV_turnover_10_3600

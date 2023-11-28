@@ -5,7 +5,7 @@ library("MASS")
 
 
 ### IMPORT DATA ###
-setwd("C:/Users/macie/Desktop/uni/PM assignment/portfolio-management-main/Data")
+#setwd("C:/Users/macie/Desktop/uni/PM assignment/portfolio-management-main/Data")
 #import data 
 ret_raw = read.csv("RET.csv", header = TRUE, sep = ",", stringsAsFactors = FALSE)
 View(ret_raw)
