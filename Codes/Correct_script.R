@@ -344,8 +344,6 @@ calculate_portfolio_metrics_GMV <- function(N, M, simul) {
 ########
 'N = 10'
 ########
-mean(GMV_result_10_120$return)
-
 
 N <- 10
 simulated_data <- simulated_10[1:20000, 1:N]
@@ -369,7 +367,7 @@ GMV_turnover_10_3600 <- GMV_result_10_3600$turnover
 N <- 100
 simulated_data <- simulated_100[1:20000, 1:N]
 
-GMV_GMV_result_100_120 <- calculate_portfolio_metrics_GMV(100, 120, simulated_data)
+GMV_result_100_120 <- calculate_portfolio_metrics_GMV(100, 120, simulated_data)
 GMV_sharpe_ratio_100_120 <- GMV_result_100_120$sharpe_ratio
 GMV_turnover_100_120 <- GMV_result_100_120$turnover
 
@@ -381,92 +379,6 @@ GMV_result_100_3600 <- calculate_portfolio_metrics_GMV(100, 3600, simulated_data
 GMV_sharpe_ratio_100_3600 <- GMV_result_100_3600$sharpe_ratio
 GMV_turnover_100_3600 <- GMV_result_100_3600$turnover
 
-'''
-################################################
-# Exercise 1.h (10 assets)  Momentum Portfolio #
-################################################
-'''
-calculate_portfolio_metrics_MOM <- function(N, M, simul) {
-  iota <- matrix(1, nrow = N, ncol = 1)
-  T <- nrow(simul)
-  threshold <- 0.3 * N
-  
-  MOM <- matrix(0, nrow = T, ncol = N)
-  momReturns <- matrix(0, nrow = T, ncol = 1)
-  
-  # Calculate MOM weights and MOM Returns
-  for (i in (M + 1):T) {
-    sorted_returns = order(simul[i, 1:N], decreasing = F)
-    short_indices <- sorted_returns[1:threshold]
-    long_indices <- sorted_returns[(N - threshold + 1):N]
-    
-    for( j in 1:N){
-      if(j %in% short_indices){
-        MOM[i,j] <- -1/threshold
-      }else if(j %in% long_indices){
-        MOM[i,j] <- 1/threshold
-      }
-    }
-    
-    momReturns[i,1] <- t(MOM[i,]) %*% simul[i, 1:N]
-  }
-  
-  # Calculate turnover
-  mom_turnover <- 0
-  for (i in (M + 1):T) {
-    for (j in 1:N) {
-      mom_turnover = mom_turnover + abs(MOM[i, j] - MOM[i - 1, j] * simul[i, j] / momReturns[i,])
-    }
-  }
-  mom_turnover <- mom_turnover / (T - M)
-  
-  # Calculate Sharpe ratio
-  mom_sharpe <- mean(momReturns[(M + 1):T, ]) / sd(momReturns[(M + 1):T, ])
-  
-  return(list(returns = momReturns, weights = MOM, sharpe_ratio = mom_sharpe, turnover = mom_turnover))
-}
-
-
-########
-'N = 10'
-########
-
-mean(MOM_result_10_120$returns)
-sd(MOM_result_10_120$returns)
-
-N <- 10
-simulated_data <- simulated_10[1:20000, 1:N]
-
-MOM_result_10_120 <- calculate_portfolio_metrics_MOM(10, 120, simulated_data)
-MOM_sharpe_ratio_10_120 <- MOM_result_10_120$sharpe_ratio
-MOM_turnover_10_120 <- MOM_result_10_120$turnover
-
-MOM_result_10_240 <- calculate_portfolio_metrics_MOM(10, 240, simulated_data)
-MOM_sharpe_ratio_10_240 <- MOM_result_10_240$sharpe_ratio
-MOM_turnover_10_240 <- MOM_result_10_240$turnover
-
-MOM_result_10_3600 <- calculate_portfolio_metrics_MOM(10, 3600, simulated_data)
-MOM_sharpe_ratio_10_3600 <- MOM_result_10_3600$sharpe_ratio
-MOM_turnover_10_3600 <- MOM_result_10_3600$turnover
-
-########
-'N = 100'
-########
-
-N <- 100
-simulated_data <- simulated_100[1:20000, 1:N]
-
-MOM_result_100_120 <- calculate_portfolio_metrics_MOM(100, 120, simulated_data)
-MOM_sharpe_ratio_100_120 <- MOM_result_100_120$sharpe_ratio
-MOM_turnover_100_120 <- MOM_result_100_120$turnover
-
-MOM_result_100_240 <- calculate_portfolio_metrics_MOM(100, 240, simulated_data)
-MOM_sharpe_ratio_100_240 <- MOM_result_100_240$sharpe_ratio
-MOM_turnover_100_240 <- MOM_result_100_240$turnover
-
-MOM_result_100_3600 <- calculate_portfolio_metrics_MOM(100, 3600, simulated_data)
-MOM_sharpe_ratio_100_3600 <- MOM_result_100_3600$sharpe_ratio
-MOM_turnover_100_3600 <- MOM_result_100_3600$turnover
 
 '''
 #####################################
@@ -512,7 +424,7 @@ calculate_portfolio_metrics_BS <- function(N, M, simul) {
   # Calculate Sharpe ratio
   tan_sharpe <- mean(tanReturns[(M + 1):T, ]) / sd(tanReturns[(M + 1):T, ])
   
-  return(list(weights = TAN, sharpe_ratio = tan_sharpe, turnover = tan_turnover))
+  return(list(return = tanReturns, weights = TAN, sharpe_ratio = tan_sharpe, turnover = tan_turnover))
 }
 
 
@@ -554,3 +466,52 @@ BS_turnover_100_240 <- BS_result_100_240$turnover
 BS_result_100_3600 <- calculate_portfolio_metrics_BS(100, 3600, simulated_data)
 BS_sharpe_ratio_100_3600 <- BS_result_100_3600$sharpe_ratio
 BS_turnover_100_3600 <- BS_result_100_3600$turnover
+
+
+
+######################################################################
+# Exercise K : Test the difference of sharpe ratio between EW and BS #
+######################################################################
+
+
+###################
+# N=10 & M = 3600 #
+###################
+
+N <- 10
+M <- 3600
+
+# assume stationariety on the returns of the two portfolios
+r_ew = (EW_returns_10 - mean(EW_returns_10))[(M+1):20000]
+r_bs = (BS_result_10_3600$return[(M+1):20000] - mean(BS_result_10_3600$return))
+
+
+# define vector v = (a,b,c,d) #where a = mean(r_ew), b = mean(r_bs), c = mean(r_ew^2), d = mean(r_bs^2)
+a = mean(r_ew)
+b = mean(r_bs)
+c = mean(r_ew^2)
+d = mean(r_bs^2)
+
+v = cbind(a,b,c,d)
+
+# define Delta_hat as the difference between the sharpe ratios of the 2 portfolios
+Delta_hat = (a / ( sqrt(c - a^2) ) ) - (b / ( sqrt(d - b^2) ) )
+
+# define the gradient of f(v) where f(v) = delta
+grad_f_a = c / ( c - a^2 )^(3/2)
+grad_f_b = - d / ( d - b^2 )^(3/2)
+grad_f_c = -0.5 * ( a  / ( c - a^2 )^(3/2) )
+grad_f_d = 0.5 * ( b  / ( d - b^2 )^(3/2) )
+
+# define the HAC estimator of the variance of v
+library(HAC)
+
+v_list = list(as.character(a), as.character(b), as.character(c), as.character(d))
+
+HAC = hac(v_list, type = "Bartlett")
+
+psi_hat = par.pairs(HAC) #FIXME 
+
+
+
+
